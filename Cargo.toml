@@ -19,6 +19,9 @@ anyhow = "1.0.58"
 clap = { version = "3.2.14", features = ["derive"] }
 eframe = "0.18.0"
 egui = "0.18.1"
-egui_extras = { version = "0.18.0", features = ["image"] }
+egui_extras = { version = "0.18.0", features = ["image", "svg"] }
 image = "0.24.3"
 mime_guess = "2.0.4"
+resvg = "0.22.0"
+tiny-skia = "0.6.6"
+usvg = "0.22.0"

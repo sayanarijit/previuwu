@@ -4,6 +4,7 @@ use crate::preview::Preview;
 use anyhow::Error;
 use anyhow::Result;
 use eframe::{CreationContext, NativeOptions};
+use egui::Vec2;
 use pipe::Pipe;
 use std::sync::mpsc;
 
@@ -71,8 +72,8 @@ impl App {
         res
     }
 
-    fn load(&mut self, path: String, height: usize) {
-        let preview = Preview::load(path, height);
+    fn load(&mut self, path: String, size: Vec2) {
+        let preview = Preview::load(path, size);
         std::mem::swap(&mut self.preview, &mut self.last_preview);
         self.preview = Some(preview);
     }
@@ -85,7 +86,7 @@ impl App {
     ) -> Result<()> {
         egui::CentralPanel::default().show(ctx, |ui| {
             if let Some(path) = newpath {
-                self.load(path, ui.available_height().floor() as usize)
+                self.load(path, ui.available_size().floor())
             }
 
             if let Some(preview) = self.preview.as_ref() {

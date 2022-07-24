@@ -8,6 +8,7 @@ use anyhow::Result;
 use eframe::Frame;
 use egui::Context;
 use egui::Ui;
+use egui::Vec2;
 use egui_extras::RetainedImage;
 
 pub enum Content {
@@ -19,7 +20,7 @@ pub enum Content {
 }
 
 impl Content {
-    fn load(path: &str, height: usize) -> Result<Self> {
+    fn load(path: &str, size: Vec2) -> Result<Self> {
         let pathbuf = PathBuf::from(&path);
 
         let content = if pathbuf.is_dir() {
@@ -36,20 +37,21 @@ impl Content {
             // let ext = pathbuf.extension().and_then(|x| x.to_str());
             let mime = mime_guess::from_path(&pathbuf).first_or_text_plain();
             let type_ = mime.type_().as_str();
-            let subtype = mime.type_().as_str();
+            let subtype = mime.subtype().as_str();
 
             match (type_, subtype) {
-                ("image", _) => {
+                ("image", img_ty) => {
                     let bytes = std::fs::read(pathbuf)?;
-                    let image =
-                        RetainedImage::from_image_bytes(path, &bytes).map_err(Error::msg)?;
-                    Content::Image(image)
+                    Content::Image(if img_ty.starts_with("svg") {
+                        self::from_svg_bytes(path, &bytes, Some(size)).map_err(Error::msg)?
+                    } else {
+                        RetainedImage::from_image_bytes(path, &bytes).map_err(Error::msg)?
+                    })
                 }
-
                 ("text", _) => {
                     let mut lines = vec![];
                     let reader = BufReader::new(File::open(pathbuf)?);
-                    for line in reader.lines().take(height) {
+                    for line in reader.lines().take(size.y as usize) {
                         lines.push(line?);
                     }
 
@@ -64,18 +66,56 @@ impl Content {
     }
 }
 
+// Modified from egui_extras (this should probably be in there anyways, to allow for scaling)
+pub fn from_svg_bytes(
+    debug_name: impl Into<String>,
+    svg_bytes: &[u8],
+    render_size: Option<Vec2>,
+) -> Result<RetainedImage, String> {
+    let mut opt = usvg::Options::default();
+    opt.fontdb.load_system_fonts();
+
+    let rtree = usvg::Tree::from_data(svg_bytes, &opt.to_ref()).map_err(|err| err.to_string())?;
+
+    let (w, h) = match render_size {
+        Some(Vec2 { x, y }) => (x as _, y as _),
+        None => rtree.svg_node().size.to_screen_size().dimensions(),
+    };
+
+    let mut pixmap = tiny_skia::Pixmap::new(w, h)
+        .ok_or_else(|| format!("Failed to create SVG Pixmap of size {}x{}", w, h))?;
+
+    let fit_to = usvg::FitTo::Size(w, h);
+    resvg::render(
+        &rtree,
+        fit_to,
+        tiny_skia::Transform::default(),
+        pixmap.as_mut(),
+    )
+    .ok_or_else(|| "Failed to render SVG".to_owned())?;
+
+    let image = egui::ColorImage::from_rgba_unmultiplied(
+        [pixmap.width() as _, pixmap.height() as _],
+        pixmap.data(),
+    );
+
+    let retained_image = RetainedImage::from_color_image(debug_name, image);
+
+    Ok(retained_image)
+}
+
 pub(crate) struct Preview {
     pub(crate) path: String,
     pub(crate) content: Content,
 }
 
 impl Preview {
-    pub(crate) fn load<S>(path: S, height: usize) -> Self
+    pub(crate) fn load<S>(path: S, size: Vec2) -> Self
     where
         S: Into<String>,
     {
         let path = path.into();
-        let content = Content::load(&path, height).unwrap_or_else(Content::Error);
+        let content = Content::load(&path, size).unwrap_or_else(Content::Error);
         Self { path, content }
     }
 
