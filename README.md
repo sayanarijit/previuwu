@@ -1,6 +1,6 @@
 # previuwu
 
-A generic previewer that can preview anything & everything.
+An all-in-one previewer for the furries.
 
 Uses [egui][3] to render the preview window.
 
