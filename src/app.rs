@@ -71,11 +71,10 @@ impl App {
         res
     }
 
-    fn load(&mut self, path: String, height: usize) -> Result<()> {
-        let preview = Preview::load(path, height)?;
+    fn load(&mut self, path: String, height: usize) {
+        let preview = Preview::load(path, height);
         std::mem::swap(&mut self.preview, &mut self.last_preview);
         self.preview = Some(preview);
-        Ok(())
     }
 
     fn render_preview(
@@ -86,10 +85,7 @@ impl App {
     ) -> Result<()> {
         egui::CentralPanel::default().show(ctx, |ui| {
             if let Some(path) = newpath {
-                if let Err(err) = self.load(path, ui.available_height().floor() as usize) {
-                    self.render_err(ctx, frame, err);
-                    return;
-                }
+                self.load(path, ui.available_height().floor() as usize)
             }
 
             if let Some(preview) = self.preview.as_ref() {
@@ -121,7 +117,7 @@ impl eframe::App for App {
                 }
             }
             Some(Message::Quit) => {
-                if self.input_counter == 1 {
+                if self.input_counter <= 1 {
                     frame.quit()
                 } else {
                     self.input_counter -= 1;

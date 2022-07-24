@@ -14,6 +14,7 @@ pub enum Content {
     Directory(Vec<String>),
     Text(Vec<String>),
     Image(RetainedImage),
+    Error(Error),
     Unknown,
 }
 
@@ -69,29 +70,29 @@ pub(crate) struct Preview {
 }
 
 impl Preview {
-    pub(crate) fn load<S>(path: S, height: usize) -> Result<Self>
+    pub(crate) fn load<S>(path: S, height: usize) -> Self
     where
         S: Into<String>,
     {
         let path = path.into();
-        let content = Content::load(&path, height)?;
-        Ok(Self { path, content })
+        let content = Content::load(&path, height).unwrap_or_else(Content::Error);
+        Self { path, content }
     }
 
     pub(crate) fn show(&self, _ctx: &Context, _frame: &mut Frame, ui: &mut Ui) {
         ui.heading(&self.path);
 
         match &self.content {
-            Content::Directory(files) => {
-                for file in files {
-                    ui.label(file);
+            Content::Text(lines) | Content::Directory(lines) => {
+                for line in lines {
+                    ui.label(line);
                 }
             }
             Content::Image(image) => {
                 image.show_max_size(ui, ui.min_size());
             }
-            Content::Text(lines) => {
-                for line in lines {
+            Content::Error(err) => {
+                for line in err.to_string().lines() {
                     ui.label(line);
                 }
             }
