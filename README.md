@@ -1,12 +1,20 @@
 # previuwu
 
-A generic previewer that can preview anything as everything.
+A generic previewer that can preview anything & everything.
 
 Uses [egui][3] to render the preview window.
 
 STATUS: Proof of Concept (⚠️ heavy work in progress).
 
+### Demo
+
+#### Preview texts
+
 https://user-images.githubusercontent.com/11632726/180646344-4cd4e487-9dd9-49a7-9e90-a1baac291124.mp4
+
+#### Preview images
+
+https://user-images.githubusercontent.com/11632726/180646954-3a4e8a39-0400-4a24-bc4b-23f7dda9f8bc.mp4
 
 ### Install
 
