@@ -47,17 +47,20 @@ previuwu /path/to/file --pipe - --pipe path/to/input.fifo
 
 ### Use Case
 
-Example usage with [xplr][2]:
+Example usage with [xplr][2] and [nnn][4]:
 
 ```bash
 # Create a fifo file
-mkfifo /tmp/xplr.fifo
+mkfifo /tmp/previuwu.fifo
 
 # Run previuwu in background (will close automatically when done)
-previuwu --pipe /tmp/xplr.fifo &
+previuwu --pipe /tmp/previuwu.fifo &
 
 # Run xplr with fifo enabled
-xplr --on-load 'StartFifo: /tmp/xplr.fifo'
+xplr --on-load 'StartFifo: /tmp/previuwu.fifo'
+
+# Run nnn with fifo enabled
+NNN_FIFO=/tmp/previuwu.fifo nnn
 ```
 
 ### Supports
@@ -89,3 +92,4 @@ Some files can be really slow to load/render in development mode (`cargo run`). 
 [1]: https://man7.org/linux/man-pages/man7/fifo.7.html
 [2]: https://xplr.dev
 [3]: https://github.com/emilk/egui
+[4]: https://github.com/jarun/nnn
