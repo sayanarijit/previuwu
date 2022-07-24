@@ -63,6 +63,10 @@ impl App {
         let mut res = None;
         while let Ok(msg) = self.receiver.try_recv() {
             res = Some(msg);
+            if matches!(res, Some(Message::Quit)) {
+                // Don't skip counting quit.
+                break;
+            }
         }
         res
     }
