@@ -14,6 +14,7 @@ pub(crate) struct App {
     sender: mpsc::Sender<Message>,
     receiver: mpsc::Receiver<Message>,
     options: NativeOptions,
+    input_counter: usize,
 }
 
 impl App {
@@ -30,6 +31,7 @@ impl App {
             sender,
             receiver,
             options: NativeOptions::default(),
+            input_counter: 0,
         }
     }
 
@@ -43,7 +45,8 @@ impl App {
         self
     }
 
-    pub(crate) fn with_pipe(self, pipe: Pipe) -> Self {
+    pub(crate) fn with_pipe(mut self, pipe: Pipe) -> Self {
+        self.input_counter += 1;
         pipe::start(self.sender.clone(), pipe);
         self
     }
@@ -113,7 +116,13 @@ impl eframe::App for App {
                     newpath = Some(p)
                 }
             }
-            Some(Message::Quit) => frame.quit(),
+            Some(Message::Quit) => {
+                if self.input_counter == 1 {
+                    frame.quit()
+                } else {
+                    self.input_counter -= 1;
+                }
+            }
             None => {}
         }
 
