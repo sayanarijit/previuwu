@@ -10,6 +10,8 @@ use clap::Parser;
 use pipe::Pipe;
 use std::collections::HashSet;
 
+const NAME: &str = env!("CARGO_CRATE_NAME");
+
 #[cfg(not(wasm))]
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
@@ -38,15 +40,19 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let mut app = App::new("previuwu");
+    let mut app = App::new(NAME);
 
     if let Some(path) = args.path {
         app = app.with_preview(path);
     }
 
     let pipes: HashSet<Pipe> = HashSet::from_iter(args.pipe.into_iter());
-    for pipe in pipes {
-        app = app.with_pipe(pipe);
+    match app.with_pipes(pipes) {
+        Ok(a) => app = a,
+        Err(err) => {
+            eprintln!("{}: error: {}", NAME, err);
+            std::process::exit(2);
+        }
     }
 
     app.run();

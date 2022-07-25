@@ -48,10 +48,20 @@ impl App {
         self
     }
 
-    pub(crate) fn with_pipe(mut self, pipe: Pipe) -> Self {
+    pub(crate) fn with_pipe(mut self, pipe: Pipe) -> Result<Self> {
         self.active_inputs += 1;
-        pipe::start(self.sender.clone(), pipe);
-        self
+        pipe::start(self.sender.clone(), pipe)?;
+        Ok(self)
+    }
+
+    pub(crate) fn with_pipes<I>(mut self, pipes: I) -> Result<Self>
+    where
+        I: IntoIterator<Item = Pipe>,
+    {
+        for pipe in pipes {
+            self = self.with_pipe(pipe)?;
+        }
+        Ok(self)
     }
 
     pub(crate) fn run(self) {
