@@ -584,6 +584,9 @@ checksum = "877bfcce06463cdbcfd7f4efd57608b1384d6d9ae03b33e503fbba1d1a899a52"
 dependencies = [
  "egui",
  "image",
+ "resvg",
+ "tiny-skia",
+ "usvg",
 ]
 
 [[package]]
@@ -1526,9 +1529,6 @@ dependencies = [
  "egui_extras",
  "image",
  "mime_guess",
- "resvg",
- "tiny-skia",
- "usvg",
 ]
 
 [[package]]

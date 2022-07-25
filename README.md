@@ -83,9 +83,9 @@ Very basic (ugly) support for the following file types has been implemented:
 
 First of all, thank you.
 
-Please go through `src/preview.rs` and try to implement laoding and/or rendering as many file types as you can.
+Please go through `src/preview` and try to implement loading and/or rendering as many file types as you can.
 
-Parsing is the easy part. Rendering might require some experience with [egui][3].
+Loading is the easy part. Rendering might require some experience with [egui][3].
 
 Some files can be really slow to load/render in development mode (`cargo run`). Try running in release mode (`cargo run --release`).
 

@@ -1,5 +1,6 @@
 use crate::message::Message;
 use crate::pipe;
+use crate::preview::Content;
 use crate::preview::Preview;
 use anyhow::Error;
 use anyhow::Result;
@@ -15,7 +16,7 @@ pub(crate) struct App {
     sender: mpsc::Sender<Message>,
     receiver: mpsc::Receiver<Message>,
     options: NativeOptions,
-    input_counter: usize,
+    active_inputs: usize,
 }
 
 impl App {
@@ -32,22 +33,23 @@ impl App {
             sender,
             receiver,
             options: NativeOptions::default(),
-            input_counter: 0,
+            active_inputs: 0,
         }
     }
 
-    pub(crate) fn with_preview<S>(self, path: S) -> Self
+    pub(crate) fn with_preview<S>(mut self, path: S) -> Self
     where
         S: Into<String>,
     {
-        self.sender
-            .send(Message::Preview(path.into()))
-            .expect("failed to send initial preview path");
+        let path = path.into();
+        if let Err(err) = self.sender.send(Message::Preview(path.clone())) {
+            self.preview = Some(Preview::new(path, Content::Error(err.into())));
+        }
         self
     }
 
     pub(crate) fn with_pipe(mut self, pipe: Pipe) -> Self {
-        self.input_counter += 1;
+        self.active_inputs += 1;
         pipe::start(self.sender.clone(), pipe);
         self
     }
@@ -117,11 +119,14 @@ impl eframe::App for App {
                     newpath = Some(p)
                 }
             }
+            Some(Message::Error(err)) => {
+                self.preview = Some(Preview::new("Error", Content::Error(err)));
+            }
             Some(Message::Quit) => {
-                if self.input_counter <= 1 {
+                if self.active_inputs <= 1 {
                     frame.quit()
                 } else {
-                    self.input_counter -= 1;
+                    self.active_inputs -= 1;
                 }
             }
             None => {}

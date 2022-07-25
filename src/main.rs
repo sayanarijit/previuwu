@@ -8,6 +8,7 @@ mod preview;
 use app::App;
 use clap::Parser;
 use pipe::Pipe;
+use std::collections::HashSet;
 
 #[cfg(not(wasm))]
 #[derive(Parser, Debug)]
@@ -43,7 +44,8 @@ fn main() {
         app = app.with_preview(path);
     }
 
-    for pipe in args.pipe {
+    let pipes: HashSet<Pipe> = HashSet::from_iter(args.pipe.into_iter());
+    for pipe in pipes {
         app = app.with_pipe(pipe);
     }
 

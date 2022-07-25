@@ -5,7 +5,7 @@ use std::io::{self, BufRead, BufReader};
 use std::str::FromStr;
 use std::sync::mpsc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub(crate) enum Pipe {
     Fifo(String),
     Std,
@@ -38,21 +38,38 @@ pub(crate) fn start(tx: mpsc::Sender<Message>, input: Pipe) {
             std::thread::spawn(move || {
                 let in_stream = std::io::stdin().lock();
                 for line in in_stream.lines() {
-                    let path = line.unwrap();
-                    tx.send(Message::Preview(path)).unwrap_or_default();
+                    match line {
+                        Ok(path) => {
+                            tx.send(Message::Preview(path)).unwrap_or_default();
+                        }
+                        Err(err) => {
+                            tx.send(Message::Error(err.into())).unwrap_or_default();
+                        }
+                    }
                 }
                 tx.send(Message::Quit).unwrap();
             });
         }
 
         Pipe::Fifo(in_) => {
-            std::thread::spawn(move || {
-                let in_stream = BufReader::new(File::open(in_).expect("failed to open input file"));
-                for line in in_stream.lines() {
-                    let path = line.unwrap();
-                    tx.send(Message::Preview(path)).unwrap_or_default();
+            std::thread::spawn(move || match File::open(in_) {
+                Ok(file) => {
+                    let in_stream = BufReader::new(file);
+                    for line in in_stream.lines() {
+                        match line {
+                            Ok(path) => {
+                                tx.send(Message::Preview(path)).unwrap_or_default();
+                            }
+                            Err(err) => {
+                                tx.send(Message::Error(err.into())).unwrap_or_default();
+                            }
+                        }
+                    }
+                    tx.send(Message::Quit).unwrap();
                 }
-                tx.send(Message::Quit).unwrap();
+                Err(err) => {
+                    tx.send(Message::Error(err.into())).unwrap_or_default();
+                }
             });
         }
     };
