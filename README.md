@@ -38,7 +38,7 @@ Allow streaming input from stdin:
 previuwu /path/to/file --pipe -
 ```
 
-Also allow streaming input from a named pipe[1]:
+Also allow streaming input from a named [pipe][1]:
 
 ```bash
 # mkfifo path/to/input.fifo
@@ -46,6 +46,12 @@ previuwu /path/to/file --pipe - --pipe path/to/input.fifo
 ```
 
 ### Use Case
+
+Run a slide show of the contents in your $PWD:
+
+```bash
+ls -1 | while read -r file; do echo "$file"; sleep 1; done | previuwu -p -
+```
 
 Example usage with [xplr][2] and [nnn][4]:
 
