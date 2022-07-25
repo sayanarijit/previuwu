@@ -1,6 +1,6 @@
 # previuwu
 
-An all-in-one previewer for the furries.
+An all-in-one preview window for the furries.
 
 Uses [egui][3] to render the preview window.
 
