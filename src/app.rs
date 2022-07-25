@@ -8,6 +8,7 @@ use eframe::{CreationContext, NativeOptions};
 use egui::Vec2;
 use pipe::Pipe;
 use std::sync::mpsc;
+use std::time::Duration;
 
 pub(crate) struct App {
     title: String,
@@ -17,10 +18,11 @@ pub(crate) struct App {
     receiver: mpsc::Receiver<Message>,
     options: NativeOptions,
     active_inputs: usize,
+    interval: u64,
 }
 
 impl App {
-    pub(crate) fn new<S>(title: S) -> Self
+    pub(crate) fn new<S>(title: S, interval: u64) -> Self
     where
         S: Into<String>,
     {
@@ -34,6 +36,7 @@ impl App {
             receiver,
             options: NativeOptions::default(),
             active_inputs: 0,
+            interval,
         }
     }
 
@@ -139,12 +142,13 @@ impl eframe::App for App {
                     self.active_inputs -= 1;
                 }
             }
-            None => {}
+            None => {
+                std::thread::sleep(Duration::from_millis(self.interval));
+            }
         }
 
         if let Err(err) = self.render_preview(ctx, frame, newpath) {
             self.render_err(ctx, frame, err);
-            return;
         }
     }
 }

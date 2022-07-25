@@ -34,13 +34,19 @@ struct Args {
     /// previuwu --pipe path/to/input.fifo --pipe -
     #[clap(short, long)]
     pipe: Vec<Pipe>,
+
+    /// Interval between each refresh when there's no interaction.
+    ///
+    /// The lower the value, the more responsive it gets, but uses more cpu.
+    #[clap(long, default_value = "200")]
+    interval: u64,
 }
 
 #[cfg(not(wasm))]
 fn main() {
     let args = Args::parse();
 
-    let mut app = App::new(NAME);
+    let mut app = App::new(NAME, args.interval);
 
     if let Some(path) = args.path {
         app = app.with_preview(path);
