@@ -1,7 +1,9 @@
+mod binary;
 mod directory;
 mod image;
 mod text;
 
+use self::binary::Binary;
 use self::directory::Directory;
 use self::image::Image;
 use self::text::Text;
@@ -16,6 +18,7 @@ use std::path::PathBuf;
 pub enum Content {
     Directory(Directory),
     Text(Text),
+    Binary(Binary),
     Image(Image),
     Error(Error),
 }
@@ -31,7 +34,7 @@ impl Content {
         let (type_, subtype) = if path.is_dir() {
             ("inode".to_string(), "directory".to_string())
         } else {
-            let m = mime_guess::from_path(&path).first_or_text_plain();
+            let m = mime_guess::from_path(&path).first_or_octet_stream();
             (m.type_().to_string(), m.subtype().to_string())
         };
 
@@ -43,6 +46,13 @@ impl Content {
             ("inode", "directory") => Self::Directory(Directory::load(&path, size)?),
             ("image", _) => Self::Image(Image::load(&path, size, meta)?),
             ("text", _) => Self::Text(Text::load(&path, size)?),
+            ("application", "octet-stream") => {
+                if std::fs::read_to_string(&path).is_ok() {
+                    Self::Text(Text::load(&path, size)?)
+                } else {
+                    Self::Binary(Binary::load(&path)?)
+                }
+            }
             (_, _) => Content::Error(Error::msg("Unknown")),
         };
 
@@ -53,12 +63,15 @@ impl Content {
         match self {
             Content::Directory(p) => p.show(ctx, frame, ui),
             Content::Text(p) => p.show(ctx, frame, ui),
+            Content::Binary(p) => p.show(ctx, frame, ui),
             Content::Image(p) => p.show(ctx, frame, ui),
-            Content::Error(err) => {
-                for line in err.to_string().lines() {
+            Content::Error(err) => err
+                .to_string()
+                .lines()
+                .take(ui.available_size().y as usize)
+                .for_each(|line| {
                     ui.label(line);
-                }
-            }
+                }),
         }
     }
 }
@@ -84,7 +97,7 @@ impl Preview {
         S: Into<String>,
     {
         let path = path.into();
-        let content = Content::load(&path, size).unwrap_or_else(Content::Error);
+        let content = Content::load(&path, size).unwrap_or_else(|err| Content::Error(err));
         Self::new(path, content)
     }
 
