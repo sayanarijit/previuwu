@@ -2,7 +2,6 @@ use crate::message::Message;
 use crate::pipe;
 use crate::preview::Content;
 use crate::preview::Preview;
-use anyhow::Error;
 use anyhow::Result;
 use eframe::{CreationContext, NativeOptions};
 use egui::Vec2;
@@ -87,18 +86,23 @@ impl App {
         res
     }
 
-    fn load(&mut self, path: String, size: Vec2) {
+    fn load<S>(&mut self, path: S, size: Vec2)
+    where
+        S: Into<String>,
+    {
         let preview = Preview::load(path, size);
         std::mem::swap(&mut self.preview, &mut self.last_preview);
         self.preview = Some(preview);
     }
 
-    fn render_preview(
+    fn render_preview<S>(
         &mut self,
         ctx: &egui::Context,
         frame: &mut eframe::Frame,
-        newpath: Option<String>,
-    ) -> Result<()> {
+        newpath: Option<S>,
+    ) where
+        S: Into<String>,
+    {
         egui::CentralPanel::default().show(ctx, |ui| {
             if let Some(path) = newpath {
                 self.load(path, ui.available_size().floor())
@@ -107,15 +111,6 @@ impl App {
             if let Some(preview) = self.preview.as_ref() {
                 preview.show(ctx, frame, ui)
             }
-        });
-
-        Ok(())
-    }
-
-    fn render_err(&mut self, ctx: &egui::Context, _f: &mut eframe::Frame, err: Error) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Error");
-            ui.label(err.to_string());
         });
     }
 }
@@ -147,8 +142,6 @@ impl eframe::App for App {
             }
         }
 
-        if let Err(err) = self.render_preview(ctx, frame, newpath) {
-            self.render_err(ctx, frame, err);
-        }
+        self.render_preview(ctx, frame, newpath.as_ref());
     }
 }
