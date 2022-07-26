@@ -11,7 +11,6 @@ use eframe::Frame;
 use egui::Context;
 use egui::Ui;
 use egui::Vec2;
-use std::path::Path;
 use std::path::PathBuf;
 
 pub enum Content {
@@ -21,9 +20,8 @@ pub enum Content {
     Error(Error),
 }
 
-pub trait Previewable: Sized {
-    fn load(path: &Path, size: Vec2, mime: (&str, &str)) -> Result<Self>;
-    fn show(&self, ctx: &Context, frame: &mut Frame, ui: &mut Ui);
+pub struct Meta {
+    pub mime: (String, String),
 }
 
 impl Content {
@@ -37,12 +35,14 @@ impl Content {
             (m.type_().to_string(), m.subtype().to_string())
         };
 
-        let mime = (type_.as_str(), subtype.as_str());
+        let meta = Meta {
+            mime: (type_, subtype),
+        };
 
-        let content = match mime {
-            ("inode", "directory") => Self::Directory(Directory::load(&path, size, mime)?),
-            ("image", _) => Self::Image(Image::load(&path, size, mime)?),
-            ("text", _) => Self::Text(Text::load(&path, size, mime)?),
+        let content = match (meta.mime.0.as_str(), meta.mime.1.as_str()) {
+            ("inode", "directory") => Self::Directory(Directory::load(&path, size)?),
+            ("image", _) => Self::Image(Image::load(&path, size, meta)?),
+            ("text", _) => Self::Text(Text::load(&path, size)?),
             (_, _) => Content::Error(Error::msg("Unknown")),
         };
 

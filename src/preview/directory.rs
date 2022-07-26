@@ -1,4 +1,3 @@
-use crate::preview::Previewable;
 use anyhow::Result;
 use eframe::Frame;
 use egui::Context;
@@ -8,8 +7,8 @@ use std::path::Path;
 
 pub struct Directory(Vec<String>);
 
-impl Previewable for Directory {
-    fn load(path: &Path, size: Vec2, _mime: (&str, &str)) -> Result<Self> {
+impl Directory {
+    pub fn load(path: &Path, size: Vec2) -> Result<Self> {
         let files = path
             .read_dir()?
             .take(size.y as usize)
@@ -22,7 +21,7 @@ impl Previewable for Directory {
         Ok(Self(files))
     }
 
-    fn show(&self, _ctx: &Context, _frame: &mut Frame, ui: &mut Ui) {
+    pub fn show(&self, _ctx: &Context, _frame: &mut Frame, ui: &mut Ui) {
         for line in &self.0 {
             ui.label(line);
         }
